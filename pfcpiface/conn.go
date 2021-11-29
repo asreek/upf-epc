@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"errors"
+	"github.com/wmnsk/go-pfcp/message"
 	"math/rand"
 	"net"
 	"sync"
@@ -113,7 +114,13 @@ func (pConn *PFCPConn) startHeartBeatMonitor() {
 			case <-heartBeatTimer.C:
 				log.Println("HeartBeat Interval Timer Expired")
 
-				pConn.sendHeartBeatRequest()
+				r := pConn.sendHeartBeatRequest()
+
+				pConn.WaitForResponse(r, pConn.upf.hbMaxRetries,
+					func(msg message.Message)bool{
+						pConn.Shutdown()
+						return true
+					})
 			}
 		}
 	}()

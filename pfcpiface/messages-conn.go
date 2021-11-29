@@ -15,7 +15,7 @@ var errFlowDescAbsent = errors.New("flow description not present")
 var errFastpathDown = errors.New("fastpath down")
 var errReqRejected = errors.New("request rejected")
 
-func (pConn *PFCPConn) sendHeartBeatRequest() {
+func (pConn *PFCPConn) sendHeartBeatRequest() *Request{
 	seq := pConn.getSeqNum()
 
 	hbreq := message.NewHeartbeatRequest(
@@ -28,11 +28,7 @@ func (pConn *PFCPConn) sendHeartBeatRequest() {
 		pConn.SendPFCPMsg(hbreq)
 	}
 
-	go pConn.WaitForResponse(hbreq, func(msg message.Message)bool{
-		pConn.Shutdown()
-	    return true
-	})
-
+	return newRequest(hbreq, pConn.shutdown, pConn.upf.hbRespDuration)
 }
 
 func (pConn *PFCPConn) handleHeartbeatRequest(msg message.Message) (message.Message, error) {

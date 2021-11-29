@@ -153,18 +153,17 @@ func (pConn *PFCPConn) SendPFCPMsg(msg message.Message) {
 	log.Traceln("Sent", msgType, "to", addr)
 }
 
-func (pConn *PFCPConn) WaitForResponse(msg message.Message, timeoutHdlr RequestTimeoutAction)  {
-	r := newRequest(msg, pConn.shutdown, pConn.upf.hbRespDuration)
-	retriesLeft := pConn.upf.hbMaxRetries
+func (pConn *PFCPConn) WaitForResponse(r *Request, maxRetries uint8, timeoutHdlr RequestTimeoutAction)  {
+	retriesLeft := maxRetries
 	for{
 		if _, rc := r.GetResponse(); rc {
 			log.Infoln("Request Timeout, retriesLeft:", retriesLeft)
 			if  retriesLeft > 0 {
-				pConn.SendPFCPMsg(msg)
+				pConn.SendPFCPMsg(r.msg)
 				retriesLeft--
 			} else {
 				if timeoutHdlr != nil {
-					timeoutHdlr(msg)
+					timeoutHdlr(r.msg)
 				}
 				break
 			}
