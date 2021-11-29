@@ -28,6 +28,11 @@ func (pConn *PFCPConn) sendHeartBeatRequest() {
 		pConn.SendPFCPMsg(hbreq)
 	}
 
+	go pConn.WaitForResponse(hbreq, func(msg message.Message)bool{
+		pConn.Shutdown()
+	    return true
+	})
+
 }
 
 func (pConn *PFCPConn) handleHeartbeatRequest(msg message.Message) (message.Message, error) {
@@ -47,7 +52,9 @@ func (pConn *PFCPConn) handleHeartbeatRequest(msg message.Message) (message.Mess
 }
 
 func (pConn *PFCPConn) handleHeartbeatResponse(msg message.Message) (message.Message, error) {
-	// TODO: Handle timers
+
+	pConn.RemovePendingRequest(msg)
+
 	pConn.StartHeartBeatTimer()
 	// TODO: Check and update remote recovery timestamp
 	return nil, nil
